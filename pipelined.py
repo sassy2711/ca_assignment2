@@ -349,9 +349,9 @@ def pipeline():
                 elif (rt_flag == 1 and lw_flag == 0):
                     Register_File[ID_EX["rt"]] = EX_MEM["output"]
                 MEM_WB = MEM(ID_EX)
-                if (rs_flag == 1 and lw_flag == 0):
+                if (rs_flag == 1 and lw_flag == 1):
                     Register_File[ID_EX["rs"]] = MEM_WB["output"]
-                elif (rt_flag == 1 and lw_flag == 0):
+                elif (rt_flag == 1 and lw_flag == 1):
                     Register_File[ID_EX["rt"]] = MEM_WB["output"]
             elif(i == 4):
                 WB(MEM_WB)
