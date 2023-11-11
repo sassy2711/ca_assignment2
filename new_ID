@@ -1,0 +1,47 @@
+def ID(instruction):
+    global PC
+    if(instruction != -1):
+        opcode=instruction[0:6]
+        b=[0]*9
+        if(opcode in ["000000"]):   #slt
+            b[0]='R'
+            b[1]=opcode
+            b[2]=Register_File[Register_dict[instruction[6:11]]]
+            b[3]=Register_File[Register_dict[instruction[11:16]]]
+            b[4]=Register_dict[instruction[16:21]]
+            b[5]=0
+            b[6]=instruction[26:]
+            b[7]=Register_dict[instruction[6:11]]
+            b[8]=Register_dict[instruction[11:16]]
+        elif(opcode  in ["001000","100011"]):  #addi,lw,
+            b[0]='I'
+            b[1]=opcode
+            b[2]=Register_File[Register_dict[instruction[6:11]]]
+            b[3]=Register_dict[instruction[11:16]]      #b[3]=rt
+            b[4]=binary_string_to_decimal(instruction[16:])
+            b[5]=Register_dict[instruction[6:11]]       #b[7]=rs
+        elif(opcode == "101011"):        #sw
+            b[0]='I'
+            b[1]=opcode
+            b[2]=Register_File[Register_dict[instruction[6:11]]]
+            b[3]=Register_File[Register_dict[instruction[11:16]]]
+            b[4]=binary_string_to_decimal(instruction[16:])
+            b[5]=Register_dict[instruction[6:11]]       #b[5]=rs
+            b[6]=Register_dict[instruction[11:16]]      #b[7]=rt
+        elif(opcode=="000100"):     #beq
+            b[0]='I'
+            b[1]=opcode
+            b[2]=Register_dict[instruction[6:11]]   #b[2]=rs
+            b[3]=Register_dict[instruction[11:16]]  #b[3]=rt
+            #print(Register_File[Register_dict[instruction[6:11]]],Register_File[Register_dict[instruction[11:16]]])
+            if(Register_File[Register_dict[instruction[6:11]]]==Register_File[Register_dict[instruction[11:16]]]):
+                PC=int(PC+(binary_string_to_decimal(instruction[16:])*4))
+        
+        elif(opcode  in ["000010"]): #j
+            b[0]='J'
+            b[1]=opcode
+            PC = int(binary_string_to_decimal(instruction[6:])*4)
+        
+    else:
+        b=[]
+    return b
