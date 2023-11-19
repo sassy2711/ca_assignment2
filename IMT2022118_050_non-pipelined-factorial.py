@@ -241,11 +241,6 @@ cycleCount = 0
 while(PC<=4194352):
     cycleCount += 5
     Cycle()
-    
-#for i in main_memory:
-#    print(main_memory[i])
-
-#print(Register_File[18])
 
 for i in main_memory:
     print(i, end = ": ")
@@ -258,4 +253,5 @@ for i in range(len(Register_File)):
     print(Register_File[i])
 
 print()
+print("No of cycles: ", end = "")
 print(cycleCount)
