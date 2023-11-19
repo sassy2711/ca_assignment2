@@ -241,7 +241,10 @@ def Cycle():
     #print(PC)
     
 PC=4194380
+global cycleCount 
+cycleCount = 0
 while(PC<=4194492):
+    cycleCount += 5
     Cycle()
     
 for i in main_memory:
@@ -253,3 +256,6 @@ print()
 for i in range(len(Register_File)):
     print(i, end = ": ")
     print(Register_File[i])
+
+print()
+print(cycleCount)
