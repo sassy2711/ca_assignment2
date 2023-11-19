@@ -315,5 +315,6 @@ for i in range(len(Register_File)):
     print(Register_File[i])
 
 print()
+print("No of cycles: ", end = "")
 print(cycleCount)
 
