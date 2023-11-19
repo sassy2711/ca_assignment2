@@ -1,3 +1,4 @@
+from collections import deque
 main_memory={
     268501184:13,
     268501188:2,
@@ -58,14 +59,6 @@ funct_dict = {"'slt'" : "101010"}
 address_dict = {"'loopInner'" : "00000000010000000000000010001000", "'loopOuter'" : "00000000010000000000000001010100", "'loop2'" : "00000000010000000000000010100100"}
 
 
-control_signal_1=[]
-control_signal_2=[]
-control_signal_3=[]
-control_signal_4=[]
-control_signal_5=[]
-
-
-
 
 Register_dict={
 "00000":0,
@@ -101,6 +94,34 @@ Register_dict={
 "11110":30,
 "11111":31
 }
+
+#reg_dict stores 5 bit binary values for registers
+reg_dict = {"'$s3'": "10011", "'$s4'" : "10100", "'$s7'": "10111", "'$t1'": "01001", "'$t2'" : "01010", "'$t3'" : "01011", "'$t4'" : "01100", "'$t5'" : "01101", "'$t6'" : "01110", "'$t7'" : "01111", "'$t8'" : "11000", "'$t9'" : "11001", "'$zero'" : "00000"}
+#opcode_dict stores 6 bit binary values for the functions
+opcode_dict = {"'addi'" : "001000", "'beq'" : "000100", "'lw'" : "100011", "'sw'" : "101011", "'slt'" : "000000", "'j'" : "000010"}
+#immediate_dict stores 16 bit binary values for all immediate values used in the program
+immediate_dict = {"'loopOuterEnd'" : "0000000000010000", "'loopInnerEnd'" : "0000000000001011", "'loop2end'" : "0000000000001100", "'else'" : "0000000000000010", "'0'" : "0000000000000000", "'1'" : "0000000000000001", "'4'" : "0000000000000100", "'-4'" : "1111111111111100"}
+#funct_dict stores 6 bit binary values for the funct field in R type instructions
+funct_dict = {"'slt'" : "101010"}
+#address_dict stores 32 bit binary values of the addresses of jump instructions
+address_dict = {"'loopInner'" : "00000000010000000000000010001000", "'loopOuter'" : "00000000010000000000000001010100", "'loop2'" : "00000000010000000000000010100100"}
+
+word_list = []	#this will contain lists of each word of an instruction(wont include commas and spaces)(word_list[i] = ith instruction as a list with its elements as word strings)
+
+# Create a new dictionary with swapped keys and values for reg_dict
+reg_dict_swapped = {value: key for key, value in reg_dict.items()}
+
+# Create a new dictionary with swapped keys and values for opcode_dict
+opcode_dict_swapped = {value: key for key, value in opcode_dict.items()}
+
+# Create a new dictionary with swapped keys and values for immediate_dict
+immediate_dict_swapped = {value: key for key, value in immediate_dict.items()}
+
+# Create a new dictionary with swapped keys and values for funct_dict
+funct_dict_swapped = {value: key for key, value in funct_dict.items()}
+
+# Create a new dictionary with swapped keys and values for address_dict
+address_dict_swapped = {value: key for key, value in address_dict.items()}
 
 def jump_converter(a):
     x=0
@@ -139,96 +160,131 @@ def ID(instruction):
     global PC
     if(instruction != -1):
         opcode=instruction[0:6]
-        b=[0]*7
+        b={}
         if(opcode in ["000000"]):   #slt
-            b[0]='R'
-            b[1]=opcode
-            b[2]=Register_File[Register_dict[instruction[6:11]]]
-            b[3]=Register_File[Register_dict[instruction[11:16]]]
-            b[4]=Register_dict[instruction[16:21]]
-            b[5]=0
-            b[6]=instruction[26:]
+            b["instruction type"]='R'
+            b["opcode"]=opcode
+            b["rs value"]=Register_File[Register_dict[instruction[6:11]]]
+            b["rt value"]=Register_File[Register_dict[instruction[11:16]]]
+            b["rd"]=Register_dict[instruction[16:21]]
+            b["shamt"]=0
+            b["function"]=instruction[26:]
+            b["rs"]=Register_dict[instruction[6:11]]
+            b["rt"]=Register_dict[instruction[11:16]]
         elif(opcode  in ["001000","100011"]):  #addi,lw,
-            b[0]='I'
-            b[1]=opcode
-            b[2]=Register_File[Register_dict[instruction[6:11]]]
-            b[3]=Register_dict[instruction[11:16]]
-            b[4]=binary_string_to_decimal(instruction[16:])
+            b["instruction type"]='I'
+            b["opcode"]=opcode
+            b["rs value"]=Register_File[Register_dict[instruction[6:11]]]
+            b["rt"]=Register_dict[instruction[11:16]]      #b[3]=rt
+            b["immediate"]=binary_string_to_decimal(instruction[16:])
+            b["rs"]=Register_dict[instruction[6:11]]       #b[7]=rs
         elif(opcode == "101011"):        #sw
-            b[0]='I'
-            b[1]=opcode
-            b[2]=Register_File[Register_dict[instruction[6:11]]]
-            b[3]=Register_File[Register_dict[instruction[11:16]]]
-            b[4]=binary_string_to_decimal(instruction[16:])
+            b["instruction type"]='I'
+            b["opcode"]=opcode
+            b["rs value"]=Register_File[Register_dict[instruction[6:11]]]
+            b["rt value"]=Register_File[Register_dict[instruction[11:16]]]
+            b["immediate"]=binary_string_to_decimal(instruction[16:])
+            b["rs"]=Register_dict[instruction[6:11]]       #b[5]=rs
+            b["rt"]=Register_dict[instruction[11:16]]      #b[7]=rt
         elif(opcode=="000100"):     #beq
-            b[0]='I'
-            b[1]=opcode
+            b["instruction type"]='I'
+            b["opcode"]=opcode
+            b["rs"]=Register_dict[instruction[6:11]]   #b[2]=rs
+            b["rt"]=Register_dict[instruction[11:16]]  #b[3]=rt
             #print(Register_File[Register_dict[instruction[6:11]]],Register_File[Register_dict[instruction[11:16]]])
             if(Register_File[Register_dict[instruction[6:11]]]==Register_File[Register_dict[instruction[11:16]]]):
                 PC=int(PC+(binary_string_to_decimal(instruction[16:])*4))
         
         elif(opcode  in ["000010"]): #j
-            b[0]='J'
-            b[1]=opcode
+            b["instruction type"]='J'
+            b["opcode"]=opcode
             PC = int(binary_string_to_decimal(instruction[6:])*4)
         
     else:
-        b=[]
+        b={}
     return b
     
 def EX(b):
     global PC
-    out_execute=[0]*2
-    if(b[0]=='J'):
-        if(b[1]=="000010"):
-            out_execute[0]=-1       #skip mem read and writeback
-    elif(b[0]=='R'):
-        if(b[6]=="101010"):
-            out_execute[0]=0        #skip mem read ,writeback only
-            if b[2]<b[3]:
-                out_execute[1]=[b[4],1]
-            else:
-                out_execute[1]=[b[4],0]
-    elif(b[0]=='I'):
-        if(b[1]=="001000"):     #addi
-            out_execute[0]=0
+    out_execute={}
+    out_execute["instruction type"]=b["instruction type"]
+    out_execute["opcode"]=b["opcode"]
+    
+    if(b["instruction type"]=='J'):
+        if(b["opcode"]=="000010"):
+            out_execute["flag"]=-1       #skip mem read and writeback
+    elif(b["instruction type"]=='R'):
+        out_execute["rd"]=b["rd"]
+        out_execute["rt"]=b["rt"]
+        out_execute["rs"]=b["rs"]
+        if(b["function"]=="101010"):
+            out_execute["flag"]=0   #skip mem read ,do writeback only
+
             
-            out_execute[1]=[b[3],(b[2]+b[4])]
-        elif(b[1]=="100011"):     #lw
-            out_execute[0]=1    #have to do mem read and writeback
-            out_execute[1]=[b[3],(b[2]+b[4])]
-        elif(b[1]=="101011"): #sw
-            out_execute[0]=2       #have to store in memory no  writeback
-            out_execute[1]=[b[3],(b[2]+b[4])]
-        elif(b[1]=="000100"):   #beq
-            out_execute[0]=-1
+            if b["rs value"]<b["rt value"]:
+                out_execute["output"]=1
+                
+            else:
+                out_execute["output"]=0
+                
+    elif(b["instruction type"]=='I'):
+        out_execute["rt"]=b["rt"]
+        out_execute["rs"]=b["rs"]
+        if(b["opcode"]=="001000"):     #addi
+            out_execute["flag"]=0
+            
+            out_execute["output"]=(b["rs value"]+b["immediate"])
+            
+        elif(b["opcode"]=="100011"):     #lw
+            out_execute["flag"]=1    #have to do mem read and writeback both
+            print(b["rs value"],b["immediate"])
+            out_execute["output"]=(b["rs value"]+b["immediate"])
+        elif(b["opcode"]=="101011"): #sw
+            out_execute["flag"]=2       #have to store in memory no  writeback
+            out_execute["rt value"]=b["rt value"]
+            out_execute["output"]=(b["rs value"]+b["immediate"])
+        elif(b["opcode"]=="000100"):   #beq
+            out_execute["flag"]=-1
             
     return out_execute
 
 def MEM(out_execute):
     global PC
-    Mem_out=[0]*2
-    if(out_execute[0]==-1):
-        Mem_out[0]=-1
-    if(out_execute[0]==0):
-        Mem_out[0]=1
-        Mem_out[1]=out_execute[1]
-    if(out_execute[0]==1):  #lw
-        Mem_out[0]=1
-        Mem_out[1]=[out_execute[1][0],main_memory[out_execute[1][1]]]
-    if(out_execute[0]==2):
-        Mem_out[0]=-1
-        main_memory[out_execute[1][1]]=out_execute[1][0]
+    Mem_out={}
+    Mem_out["instruction type"]=out_execute["instruction type"]
+    Mem_out["opcode"]=out_execute["opcode"]
+    if(out_execute["instruction type"]=='I'):
+        Mem_out["rs"]=out_execute["rs"]
+        Mem_out["rt"]=out_execute["rt"]
+    if(out_execute["instruction type"]=='R'):
+        Mem_out["rd"]=out_execute["rd"]
+        Mem_out["rs"]=out_execute["rs"]
+        Mem_out["rt"]=out_execute["rt"]
+    if(out_execute["flag"]==-1):    #no memory access,no writeback 
+        Mem_out["flag"]=-1          #no writeback
+    if(out_execute["flag"]==0):      #no memory access,do writeback
+        Mem_out["flag"]=1           #do writeback
+        Mem_out["output"]=out_execute["output"]
+    if(out_execute["flag"]==1):  #lw         do memory access ,do writeback
+        Mem_out["flag"]=1
+        Mem_out["output"]=main_memory[out_execute["output"]]
+    if(out_execute["flag"]==2):      #sw            do memory access,no writeback
+        Mem_out["flag"]=-1
+        main_memory[out_execute["output"]]=out_execute["rt value"]
     return Mem_out
 
 def WB(Mem_out):
     global PC
-    if(Mem_out[0]==-1):
+    
+    if(Mem_out["flag"]==-1):
         return 
-    elif(Mem_out[0]==1):   
-        Register_File[Mem_out[1][0]]=Mem_out[1][1]
+    elif(Mem_out["flag"]==1): 
+        if(Mem_out["instruction type"]=="R"):  
+            Register_File[Mem_out["rd"]]=Mem_out["output"]
+        else:
+            Register_File[Mem_out["rt"]]=Mem_out["output"]
         return
-
+        
 def Cycle():
     global PC
     instruction=IF()
@@ -241,12 +297,13 @@ def Cycle():
     #print(PC)
     
 PC=4194380
-global cycleCount 
+global cycleCount
 cycleCount = 0
 while(PC<=4194492):
     cycleCount += 5
     Cycle()
     
+
 for i in main_memory:
     print(i, end = ": ")
     print(main_memory[i])
@@ -259,3 +316,4 @@ for i in range(len(Register_File)):
 
 print()
 print(cycleCount)
+
