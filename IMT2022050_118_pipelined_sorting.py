@@ -376,6 +376,20 @@ def pipeline():
         
 pipeline()
 
-for i in range(268501216,268501233,+4):
+# for i in range(268501216,268501233,+4):
+#     print(main_memory[i])
+
+
+for i in main_memory:
+    print(i, end = ": ")
     print(main_memory[i])
+
+print()
+
+for i in range(len(Register_File)):
+    print(i, end = ": ")
+    print(Register_File[i])
+
+print()
+print("No of cycles: ", end = "")
 print(cycle_count)
